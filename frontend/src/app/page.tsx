@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { Send, User } from "lucide-react";
 import io, { Socket } from "socket.io-client";
 
-// Apuntamos al backend en el mismo servidor pero usando el subdominio con wss para tiempo real
-// const socket: Socket = io("wss://test.urpiriodev.com.do", { transports: ["websocket", "polling"] });
+// URL de producción alojada en Railway
+const SERVER_URL = "https://chat-global-backend-production.up.railway.app";
 
 export default function GlobalChat() {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -16,8 +16,14 @@ export default function GlobalChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Inicializar socket solo en el cliente
-    const newSocket = io("wss://test.urpiriodev.com.do", { transports: ["websocket", "polling"] });
+    if (!isJoined) return;
+
+    // Configurando la conexión a Railway
+    const newSocket = io(SERVER_URL, { 
+      transports: ["websocket", "polling"],
+      secure: true,
+      rejectUnauthorized: false
+    });
     setSocket(newSocket);
 
     newSocket.on("history", (history: any[]) => {
@@ -31,7 +37,7 @@ export default function GlobalChat() {
     return () => {
       newSocket.close();
     };
-  }, []);
+  }, [isJoined]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -96,7 +102,7 @@ export default function GlobalChat() {
           <h1 className="text-xl font-bold text-blue-400">Chat Global</h1>
           <p className="text-xs text-green-400 flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse"></span>
-            Conectado
+            Conectado a Railway
           </p>
         </div>
         <div className="text-sm bg-gray-700 px-3 py-1 rounded-full text-gray-300">
